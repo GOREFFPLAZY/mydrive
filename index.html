@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>File Upload Portal</title>
+  <style>
+    :root {
+      --primary: #667eea;
+      --secondary: #764ba2;
+      --accent: #f093fb;
+      --light: #f5f7fa;
+      --dark: #333;
+    }
+    body {
+      font-family: 'Trebuchet MS', sans-serif;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: var(--dark);
+    }
+    .container {
+      width: 80%;
+      max-width: 800px;
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      padding: 40px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      animation: fadeIn 1s ease;
+      position: relative;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .upload-box {
+      border: 2px dashed rgba(255, 255, 255, 0.5);
+      padding: 40px;
+      text-align: center;
+      margin-bottom: 30px;
+      border-radius: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .upload-box:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-5px);
+    }
+    input[type="file"] {
+      margin-bottom: 20px;
+      font-size: 1.1rem;
+    }
+    button {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(45deg, var(--primary), var(--accent));
+      color: #fff;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+    .files {
+      padding-top: 20px;
+    }
+    .file-item {
+      margin: 10px 0;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+      border-left: 4px solid var(--primary);
+    }
+    .file-item:hover {
+      transform: translateX(5px);
+      background: rgba(255, 255, 255, 0.3);
+    }
+    .file-preview {
+      max-width: 100%;
+      max-height: 200px;
+      margin-top: 10px;
+      border-radius: 5px;
+    }
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    a:hover {
+      text-decoration: underline;
+      color: var(--accent);
+    }
+    .file-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .logout-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.2) !important;
+      box-shadow: none !important;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    .file-container {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <button id="logoutButton" class="logout-btn">Logout</button>
+    <h1>File Upload Portal</h1>
+    <div class="upload-box">
+      <input type="file" id="fileInput" multiple>
+      <br>
+      <button onclick="uploadFiles()">Upload Files</button>
+    </div>
+    <div class="files" id="fileList"></div>
+  </div>
+  <script src="auth.js"></script>
+  <script>
+    // Check authentication on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      const authManager = new AuthManager();
+      if (!authManager.isAuthenticated()) {
+        window.location.href = 'login.html';
+      }
+
+      // Add logout functionality
+      document.getElementById('logoutButton').addEventListener('click', () => {
+        authManager.logout();
+        window.location.href = 'login.html';
+      });
+    });
+
+    let files = [];
+    function uploadFiles() {
+      const input = document.getElementById('fileInput');
+      for (let f of input.files) {
+        const url = URL.createObjectURL(f);
+        files.push({
+          name: f.name,
+          url,
+          type: getFileType(f.name)
+        });
+      }
+      renderFiles();
+      input.value = "";
+    }
+
+    function getFileType(filename) {
+      const ext = filename.split('.').pop().toLowerCase();
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) return 'image';
+      if (['mp3', 'wav', 'ogg', 'aac'].includes(ext)) return 'audio';
+      if (['mp4', 'webm', 'mov', 'avi'].includes(ext)) return 'video';
+      if (['pdf', 'doc', 'docx', 'txt'].includes(ext)) return 'document';
+      return 'other';
+    }
+
+    function renderFiles() {
+      const list = document.getElementById('fileList');
+      list.innerHTML = "<h3>Your Files:</h3>";
+      files.forEach((file) => {
+        const div = document.createElement('div');
+        div.className = 'file-item';
+        div.innerHTML = `
+          <div class="file-container">
+            <span>${getFileIcon(file.type)} ${file.name}</span>
+            <div class="file-preview" id="preview-${file.name.replace(/\./g, '-')}"></div>
+          </div>
+          <div class="file-actions">
+            <a href="${file.url}" download>Download</a>
+            ${file.type === 'image' ? `<a onclick="viewImage('${file.name.replace(/'/g, "\\'")}')">View</a>` : ''}
+            ${file.type === 'audio' ? `<a onclick="playAudio('${file.name.replace(/'/g, "\\'")}')">Play</a>` : ''}
+            ${file.type === 'video' ? `<a onclick="playVideo('${file.name.replace(/'/g, "\\'")}')">Play</a>` : ''}
+          </div>
+        `;
+        list.appendChild(div);
+
+        // Add preview for images
+        if (file.type === 'image') {
+          const preview = document.getElementById(`preview-${file.name.replace(/\./g, '-')}`);
+          preview.innerHTML = `<img src="${file.url}" class="file-preview" alt="${file.name}">`;
+        }
+      });
+    }
+
+    function getFileIcon(type) {
+      switch(type) {
+        case 'image': return '🖼️';
+        case 'audio': return '🎵';
+        case 'video': return '🎬';
+        case 'document': return '📄';
+        default: return '📁';
+      }
+    }
+
+    function viewImage(name) {
+      const file = files.find(f => f.name === name);
+      window.open(file.url, '_blank');
+    }
+
+    function playAudio(name) {
+      const file = files.find(f => f.name === name);
+      const audio = new Audio(file.url);
+      audio.play();
+    }
+
+    function playVideo(name) {
+      const file = files.find(f => f.name === name);
+      window.open(file.url, '_blank');
+    }
+  </script>
+</body>
+</html>
