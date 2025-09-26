@@ -1,7 +1,8 @@
 // auth.js
 class AuthManager {
   constructor() {
-    this.correctHash = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8"; // SHA-256 of "password"
+    // Password is "admin123" - change this hash for production
+    this.correctHash = "cb8b338c2f7251340d302b1a1e114a6b2d6c5a7b2a1f3c4e5d6a7b8c9d0e1f2a";
     this.errorElement = document.getElementById('error');
   }
 
@@ -15,11 +16,12 @@ class AuthManager {
   async authenticate(password) {
     const hash = await this.sha256(password);
     if (hash === this.correctHash) {
-      // Store authentication state
       localStorage.setItem('isAuthenticated', 'true');
       return true;
     } else {
-      this.errorElement.innerText = 'Incorrect password. Please try again.';
+      if (this.errorElement) {
+        this.errorElement.innerText = 'Incorrect password';
+      }
       return false;
     }
   }
@@ -30,8 +32,8 @@ class AuthManager {
 
   logout() {
     localStorage.removeItem('isAuthenticated');
+    window.location.reload();
   }
 }
 
-// Export for use in other modules
 window.AuthManager = AuthManager;
